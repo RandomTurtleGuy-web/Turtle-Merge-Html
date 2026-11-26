@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Turtle Merge Game</title>
   <style>
     * {
@@ -14,29 +15,38 @@
       font-family: 'Comic Sans MS', 'Comic Sans', cursive, sans-serif;
       background: linear-gradient(135deg, #7cb342 0%, #9ccc65 100%);
       min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       color: white;
       overflow: hidden;
+      touch-action: none;
+      overscroll-behavior: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
     h1 {
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-      font-size: 2.5em;
+      font-size: clamp(1.4em, 5vw, 2.5em);
     }
     #game-container {
       position: relative;
       background: #2e7d32;
       border-radius: 10px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      padding: 10px;
+      padding: 6px;
+      max-width: 100vw;
+      max-height: 85vh;
     }
     canvas {
       display: block;
       border-radius: 5px;
       background: #e8f5e9;
+      max-width: 100%;
+      height: auto;
     }
     #ui {
       position: absolute;
@@ -100,11 +110,12 @@
       background: #45a049;
     }
     #instructions {
-      margin-top: 15px;
+      margin-top: 10px;
       text-align: center;
-      max-width: 500px;
-      font-size: 0.9em;
+      max-width: 90vw;
+      font-size: clamp(0.75em, 2.5vw, 0.9em);
       opacity: 0.9;
+      padding: 0 10px;
     }
 
 
@@ -173,10 +184,8 @@
       <div id="final-score">Score: 0</div>
       <button onclick="restartGame()">Play Again</button>
     </div>
-  </div>
   <div id="instructions">
-    Move mouse to aim the angle • Click to launch a marble • Merge same turtles to evolve them! • Don't let the container overflow!
-  </div>
+    Move finger to aim • Tap to launch a marble • Merge same turtles to evolve them! • Don't let the container overflow!
   </div>
 
 
@@ -205,28 +214,30 @@ const MUSIC_DATA = "data:audio/mpeg;base64,SUQzBAAAAAABIlRYWFgAAAASAAADbWFqb3JfY
     const { Engine, Render, Runner, Bodies, Composite, Events, Body, Vector, Mouse, MouseConstraint } = Matter;
 
     // Game constants
-    const CANVAS_WIDTH = 600;
-    const CANVAS_HEIGHT = 700;
-    const CONTAINER_LEFT = 100;
-    const CONTAINER_RIGHT = 500;
-    const CONTAINER_BOTTOM = 650;
-    const CONTAINER_TOP = 150;
+    const isMobile = window.innerWidth < 700;
+    const CANVAS_WIDTH = isMobile ? Math.min(window.innerWidth - 16, 480) : 600;
+    const CANVAS_HEIGHT = isMobile ? Math.min(window.innerHeight - 140, 620) : 700;
+    const scale = CANVAS_WIDTH / 600;
+    const CONTAINER_LEFT = Math.round(100 * scale);
+    const CONTAINER_RIGHT = Math.round(500 * scale);
+    const CONTAINER_BOTTOM = Math.round(650 * scale);
+    const CONTAINER_TOP = Math.round(150 * scale);
     const WALL_THICKNESS = 20;
-    const DROP_Y = 80;
-    const DANGER_Y = CONTAINER_TOP + 30;
+    const DROP_Y = Math.round(80 * scale);
+    const DANGER_Y = CONTAINER_TOP + Math.round(30 * scale);
 
     // Levels definition
     const levels = [
-      { radius: 28, image: IMAGE_DATA['u1f344_u1f422.png'], points: 2, name: 'Mushroom', color: '#f4a261', rim: '#e76f51' },
-      { radius: 36, image: IMAGE_DATA['u1fab5_u1f422.png'], points: 4, name: 'Wood', color: '#d4a373', rim: '#8d6e63' },
-      { radius: 44, image: IMAGE_DATA['u1f338_u1f422.png'], points: 8, name: 'Blossom', color: '#ff9ec7', rim: '#e83e8c' },
-      { radius: 52, image: IMAGE_DATA['u1f30c_u1f422.png'], points: 12, name: 'Galaxy', color: '#9b5de5', rim: '#5a189a' },
-      { radius: 60, image: IMAGE_DATA['u1f41d_u1f422.png'], points: 18, name: 'Bee', color: '#ffd60a', rim: '#f48c06' },
-      { radius: 68, image: IMAGE_DATA['u1f422_u1f308.png'], points: 26, name: 'Rainbow', color: '#b5e48c', rim: '#52b788' },
-      { radius: 76, image: IMAGE_DATA['u1f422_u1f525.png'], points: 36, name: 'Fire', color: '#ffd166', rim: '#ef476f' },
-      { radius: 84, image: IMAGE_DATA['u1f621_u1f422.png'], points: 50, name: 'Angry', color: '#ff6b6b', rim: '#c1121f' },
-      { radius: 92, image: IMAGE_DATA['u1f31e_u1f422.png'], points: 70, name: 'Sun', color: '#ffe066', rim: '#f4a261' },
-      { radius: 102, image: IMAGE_DATA['emoji.svg'], points: 100, name: 'Legendary', color: '#a8e6cf', rim: '#2d6a4f' }
+      { radius: Math.round(28 * scale), image: IMAGE_DATA['u1f344_u1f422.png'], points: 2, name: 'Mushroom', color: '#f4a261', rim: '#e76f51' },
+      { radius: Math.round(36 * scale), image: IMAGE_DATA['u1fab5_u1f422.png'], points: 4, name: 'Wood', color: '#d4a373', rim: '#8d6e63' },
+      { radius: Math.round(44 * scale), image: IMAGE_DATA['u1f338_u1f422.png'], points: 8, name: 'Blossom', color: '#ff9ec7', rim: '#e83e8c' },
+      { radius: Math.round(52 * scale), image: IMAGE_DATA['u1f30c_u1f422.png'], points: 12, name: 'Galaxy', color: '#9b5de5', rim: '#5a189a' },
+      { radius: Math.round(60 * scale), image: IMAGE_DATA['u1f41d_u1f422.png'], points: 18, name: 'Bee', color: '#ffd60a', rim: '#f48c06' },
+      { radius: Math.round(68 * scale), image: IMAGE_DATA['u1f422_u1f308.png'], points: 26, name: 'Rainbow', color: '#b5e48c', rim: '#52b788' },
+      { radius: Math.round(76 * scale), image: IMAGE_DATA['u1f422_u1f525.png'], points: 36, name: 'Fire', color: '#ffd166', rim: '#ef476f' },
+      { radius: Math.round(84 * scale), image: IMAGE_DATA['u1f621_u1f422.png'], points: 50, name: 'Angry', color: '#ff6b6b', rim: '#c1121f' },
+      { radius: Math.round(92 * scale), image: IMAGE_DATA['u1f31e_u1f422.png'], points: 70, name: 'Sun', color: '#ffe066', rim: '#f4a261' },
+      { radius: Math.round(102 * scale), image: IMAGE_DATA['emoji.svg'], points: 100, name: 'Legendary', color: '#a8e6cf', rim: '#2d6a4f' }
     ];
 
     // Preload images
@@ -552,36 +563,58 @@ const MUSIC_DATA = "data:audio/mpeg;base64,SUQzBAAAAAABIlRYWFgAAAASAAADbWFqb3JfY
       });
     }
 
-    // Mouse aiming (controls angle)
-    document.getElementById('gameCanvas').addEventListener('mousemove', (e) => {
-      const rect = e.target.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      currentAimAngle = Math.atan2(my - DROP_Y, mx - FIXED_X);
-      // Limit to downward angles
+    // Helper to get canvas-relative coordinates (works with CSS scaling)
+    function getCanvasPos(clientX, clientY) {
+      const canvas = document.getElementById('gameCanvas');
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    }
+
+    function updateAimFromPoint(x, y) {
+      currentAimAngle = Math.atan2(y - DROP_Y, x - FIXED_X);
       if (currentAimAngle < 0.2) currentAimAngle = 0.2;
       if (currentAimAngle > Math.PI - 0.2) currentAimAngle = Math.PI - 0.2;
+    }
+
+    // Mouse aiming
+    document.getElementById('gameCanvas').addEventListener('mousemove', (e) => {
+      const pos = getCanvasPos(e.clientX, e.clientY);
+      updateAimFromPoint(pos.x, pos.y);
     });
 
     document.getElementById('gameCanvas').addEventListener('click', (e) => {
       if (!gameOver) dropBall();
     });
 
-    // Touch support
-    document.getElementById('gameCanvas').addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      const rect = e.target.getBoundingClientRect();
-      const touch = e.touches[0];
-      const mx = touch.clientX - rect.left;
-      const my = touch.clientY - rect.top;
-      currentAimAngle = Math.atan2(my - DROP_Y, mx - FIXED_X);
-      if (currentAimAngle < 0.2) currentAimAngle = 0.2;
-      if (currentAimAngle > Math.PI - 0.2) currentAimAngle = Math.PI - 0.2;
-    }, { passive: false });
-
+    // Touch support: drag to aim, release to drop
+    let touchAiming = false;
     document.getElementById('gameCanvas').addEventListener('touchstart', (e) => {
       e.preventDefault();
-      if (!gameOver) dropBall();
+      touchAiming = true;
+      const touch = e.touches[0];
+      const pos = getCanvasPos(touch.clientX, touch.clientY);
+      updateAimFromPoint(pos.x, pos.y);
+    }, { passive: false });
+
+    document.getElementById('gameCanvas').addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!touchAiming) return;
+      const touch = e.touches[0];
+      const pos = getCanvasPos(touch.clientX, touch.clientY);
+      updateAimFromPoint(pos.x, pos.y);
+    }, { passive: false });
+
+    document.getElementById('gameCanvas').addEventListener('touchend', (e) => {
+      e.preventDefault();
+      if (touchAiming && !gameOver) {
+        dropBall();
+      }
+      touchAiming = false;
     }, { passive: false });
 
     function restartGame() {
